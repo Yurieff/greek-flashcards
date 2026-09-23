@@ -34,16 +34,31 @@ Deno.test('counts ignore progress for words no longer in the CSV', () => {
   assert.deepEqual(counts(WORDS, extra), { known: 2, learning: 2, new: 2 });
 });
 
-Deno.test('pickSession: learning (lowest streak) → new (newest) → known (oldest seen)', () => {
-  assert.deepEqual(pickSession(WORDS, PROGRESS, 10).map((w) => w.basic), ['b', 'a', 'f', 'e', 'd', 'c']);
+// random() → 0.999 leaves a Fisher-Yates shuffle in file order (e, f); newest-first would give (f, e).
+const KEEP_ORDER = () => 0.999;
+const basics = (words) => words.map((w) => w.basic);
+
+Deno.test('pickSession: learning (lowest streak) → new (random) → known (oldest seen)', () => {
+  assert.deepEqual(basics(pickSession(WORDS, PROGRESS, 10, { random: KEEP_ORDER })), ['b', 'a', 'e', 'f', 'd', 'c']);
+  assert.deepEqual(basics(pickSession(WORDS, PROGRESS, 10, { random: () => 0 })), ['b', 'a', 'f', 'e', 'd', 'c']);
 });
 
 Deno.test('pickSession stops at the session size', () => {
-  assert.deepEqual(pickSession(WORDS, PROGRESS, 3).map((w) => w.basic), ['b', 'a', 'f']);
+  assert.deepEqual(basics(pickSession(WORDS, PROGRESS, 3, { random: KEEP_ORDER })), ['b', 'a', 'e']);
+});
+
+Deno.test('pickSession moves avoided words to the back of each pile', () => {
+  const avoid = new Set(['b', 'e', 'd']);
+  assert.deepEqual(basics(pickSession(WORDS, PROGRESS, 10, { random: KEEP_ORDER, avoid })), ['a', 'b', 'f', 'e', 'c', 'd']);
+});
+
+Deno.test('pickSession keeps learning words that fit even when avoided', () => {
+  const avoid = new Set(['a', 'b', 'e']);
+  assert.deepEqual(basics(pickSession(WORDS, PROGRESS, 3, { random: KEEP_ORDER, avoid })), ['b', 'a', 'f']);
 });
 
 Deno.test('buildSession shuffles the picked words', () => {
-  const session = buildSession(WORDS, PROGRESS, 3, () => 0);
+  const session = buildSession(WORDS, PROGRESS, 3, { random: () => 0 });
   assert.deepEqual(session.map((w) => w.basic).sort(), ['a', 'b', 'f']);
   assert.notDeepEqual(session.map((w) => w.basic), ['b', 'a', 'f']);
 });

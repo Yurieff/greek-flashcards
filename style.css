@@ -87,6 +87,26 @@ input {
 .counts dt { font-size: 13px; color: var(--muted); }
 .counts dd { margin: 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+.preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 40dvh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.preview li {
+  padding: 4px 10px;
+  font-size: 15px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.actions { display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+.actions button { white-space: nowrap; }
+
 .muted { color: var(--muted); font-size: 14px; }
 .error { color: var(--wrong); margin: 0; }
 

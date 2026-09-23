@@ -52,7 +52,12 @@
         <div><dt>Learning</dt><dd id="count-learning">0</dd></div>
         <div><dt>New</dt><dd id="count-new">0</dd></div>
       </dl>
-      <button id="start" class="primary">Start</button>
+      <p class="label">This round</p>
+      <ul id="preview" class="preview"></ul>
+      <div class="actions">
+        <button id="regenerate">🔀 Regenerate</button>
+        <button id="start" class="primary">Start</button>
+      </div>
       <p id="skipped-note" class="muted" hidden></p>
       <button id="change-token" class="link">Change token</button>
     </section>
@@ -76,8 +81,7 @@
     <section id="screen-summary" class="screen centered" hidden>
       <h1>Round done</h1>
       <p id="summary-text"></p>
-      <button id="again" class="primary">Another round</button>
-      <button id="back">Back</button>
+      <button id="next" class="primary">Next round</button>
     </section>
   </main>
 </body>

@@ -25,6 +25,8 @@ const state = {
   session: null,
   direction: oneOf(prefs.get('gf-direction', 'gr-en'), DIRECTIONS, 'gr-en'),
   size: oneOf(prefs.get('gf-size', '20'), SIZES, '20'),
+  preview: [],
+  roundWords: [],
   answersSinceSave: 0,
   saveStatus: 'saved',
 };
@@ -101,7 +103,8 @@ async function saveToken() {
   }
 }
 
-function showStart() {
+// `avoid`: words of the previous draw, pushed to the back when drawing the preview.
+function showStart(avoid = new Set()) {
   if (state.saveStatus === 'auth') {
     return showTokenScreen('Progress could not be saved: the token was rejected. Paste a new token — your answers from this session are kept.');
   }
@@ -114,7 +117,7 @@ function showStart() {
   $('count-known').textContent = c.known;
   $('count-learning').textContent = c.learning;
   $('count-new').textContent = c.new;
-  $('start').disabled = state.words.length === 0;
+  drawPreview(avoid);
   $('skipped-note').textContent = `${state.skipped} row(s) in vocab.csv could not be read and were skipped.`;
   $('skipped-note').hidden = state.skipped === 0;
   show('start');
@@ -130,10 +133,24 @@ function bindChoice(id) {
   });
 }
 
+function drawPreview(avoid = new Set()) {
+  state.preview = buildSession(state.words, state.store.data[state.direction], Number(state.size), { avoid });
+  const front = (word) => (state.direction === 'gr-en' ? word.basic : word.translation);
+  $('preview').replaceChildren(...state.preview.map((word) => {
+    const li = document.createElement('li');
+    li.textContent = front(word);
+    return li;
+  }));
+  $('start').disabled = state.preview.length === 0;
+  $('regenerate').disabled = state.preview.length === 0;
+}
+
+const basicsOf = (words) => new Set(words.map((word) => word.basic));
+
 function startSession() {
-  const words = buildSession(state.words, state.store.data[state.direction], Number(state.size));
-  if (!words.length) return;
-  state.session = new Session(words);
+  if (!state.preview.length) return;
+  state.session = new Session(state.preview);
+  state.roundWords = state.preview;
   state.answersSinceSave = 0;
   renderCard();
   show('study');
@@ -203,18 +220,18 @@ $('token-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sav
 $('retry').addEventListener('click', boot);
 bindChoice('direction');
 bindChoice('size');
+$('regenerate').addEventListener('click', () => drawPreview(basicsOf(state.preview)));
 $('start').addEventListener('click', startSession);
 $('change-token').addEventListener('click', () => showTokenScreen());
-$('token-cancel').addEventListener('click', showStart);
+$('token-cancel').addEventListener('click', () => showStart());
 $('card').addEventListener('click', reveal);
 $('card').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }
 });
 $('right').addEventListener('click', () => answer(true));
 $('wrong').addEventListener('click', () => answer(false));
-$('quit').addEventListener('click', () => { trySave(); showStart(); });
-$('again').addEventListener('click', startSession);
-$('back').addEventListener('click', showStart);
+$('quit').addEventListener('click', () => { trySave(); showStart(basicsOf(state.roundWords)); });
+$('next').addEventListener('click', () => showStart(basicsOf(state.roundWords)));
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden' && state.store?.dirty) trySave();
 });

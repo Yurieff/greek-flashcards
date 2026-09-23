@@ -68,11 +68,11 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
   - wrong: `streak = 0`, status `learning`.
   - `lastSeen = now` in both cases.
   - A new word answered correctly becomes `learning` with streak 1 (it needs 3 in a row to be known).
-- `buildSession(words, progressForDirection, size)` → array of words:
+- `buildSession(words, progressForDirection, size, { avoid })` → array of words:
   1. all Learning words (lowest streak first), then
-  2. New words, newest first (highest `index`), then
+  2. New words in random order, then
   3. Known words, oldest `lastSeen` first,
-  taken in that order until `size` is reached, then shuffled.
+  taken in that order until `size` is reached, then shuffled. Words in `avoid` (the previous draw) are moved to the back of their pile, so a regenerated set differs wherever possible; Learning words that fit in the round stay.
 - `counts(words, progressForDirection)` → `{ known, learning, new }`. Progress entries for words no longer in the CSV are ignored (kept in the file, not counted).
 - `mergeProgress(a, b)` → for every direction and word, keep the entry with the later `lastSeen`.
 
@@ -80,7 +80,7 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
 - Correct answer: card leaves the queue.
 - Wrong answer: card is re-inserted 3–5 positions later (or at the end if fewer remain) and must be answered correctly once before the session ends.
 - Every answer calls `applyAnswer` (via `ProgressStore.record`) and updates in-memory progress.
-- End: summary "X/N right on first try, M moved to Learning", buttons "Another round" / "Back".
+- End: summary "X/N right on first try, M moved to Learning", button "Next round" → start screen with a fresh preview that avoids the words just studied.
 
 ### lib/store.js
 `ProgressStore` holds progress in memory, records answers, and saves through injected `load`/`save` functions (so it is unit-testable without the network). It runs one save at a time, loops while new answers arrived during a save, and on conflict reloads, merges (local wins ties) and retries once.
@@ -105,7 +105,7 @@ Uses the GitHub REST contents API with the stored token (`Authorization: Bearer 
 ## Screens
 
 1. **Token screen** (only when no token stored): input field, "Save" button, short instructions for creating the fine-grained token. Token is validated by loading vocab; stored in `localStorage` only on success.
-2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, "Start" button, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
+2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, a "This round" preview listing each card's front (Greek for GR→EN, English for EN→GR) with "🔀 Regenerate" (new set avoiding the shown words) and "Start" (studies exactly the previewed words); changing direction or size redraws the preview, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
 3. **Study screen**: progress indicator (e.g. 7/20), the card; tapping it reveals the back below the front (front stays visible), then "✗ Didn't know" / "✓ Knew it". Save-status badge.
 4. **Summary screen** (see Session queue).
 
