@@ -47,11 +47,11 @@
         <button data-value="20">20</button>
         <button data-value="50">50</button>
       </div>
-      <dl class="counts">
-        <div><dt>Known</dt><dd id="count-known">0</dd></div>
-        <div><dt>Learning</dt><dd id="count-learning">0</dd></div>
-        <div><dt>New</dt><dd id="count-new">0</dd></div>
-      </dl>
+      <div id="counts" class="counts">
+        <button data-status="known"><span class="count-label">Known</span><span id="count-known" class="count-value">0</span></button>
+        <button data-status="learning"><span class="count-label">Learning</span><span id="count-learning" class="count-value">0</span></button>
+        <button data-status="new"><span class="count-label">New</span><span id="count-new" class="count-value">0</span></button>
+      </div>
       <p class="label">This round</p>
       <ul id="preview" class="preview"></ul>
       <div class="actions">
@@ -76,6 +76,15 @@
         <button id="wrong" class="wrong">✗ Didn't know</button>
         <button id="right" class="right">✓ Knew it</button>
       </div>
+    </section>
+
+    <section id="screen-list" class="screen" hidden>
+      <div class="study-bar">
+        <button id="list-back" class="link">‹ Back</button>
+        <span id="list-title" class="muted"></span>
+      </div>
+      <p id="list-empty" class="muted" hidden>No words here yet.</p>
+      <ul id="word-list" class="word-list"></ul>
     </section>
 
     <section id="screen-summary" class="screen centered" hidden>

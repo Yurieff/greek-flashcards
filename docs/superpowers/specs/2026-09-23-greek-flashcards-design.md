@@ -73,6 +73,7 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
   2. New words in random order, then
   3. Known words, oldest `lastSeen` first,
   taken in that order until `size` is reached, then shuffled. Words in `avoid` (the previous draw) are moved to the back of their pile, so a regenerated set differs wherever possible; Learning words that fit in the round stay.
+- `wordsWithStatus(words, progressForDirection, status)` → the words of one pile, sorted with Greek `localeCompare`.
 - `counts(words, progressForDirection)` → `{ known, learning, new }`. Progress entries for words no longer in the CSV are ignored (kept in the file, not counted).
 - `mergeProgress(a, b)` → for every direction and word, keep the entry with the later `lastSeen`.
 
@@ -108,6 +109,7 @@ Uses the GitHub REST contents API with the stored token (`Authorization: Bearer 
 2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, a "This round" preview listing each card's front (Greek for GR→EN, English for EN→GR) with "🔀 Regenerate" (new set avoiding the shown words) and "Start" (studies exactly the previewed words); changing direction or size redraws the preview, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
 3. **Study screen**: progress indicator (e.g. 7/20), the card; tapping it reveals the back below the front (front stays visible), then "✗ Didn't know" / "✓ Knew it". Save-status badge.
 4. **Summary screen** (see Session queue).
+5. **Word list screen**: tapping the Known / Learning / New tile on the start screen lists those words for the selected direction, in Greek alphabetical order: basic form and translation, plus the streak (e.g. 2/3) for Learning words. "‹ Back" returns to the start screen without redrawing the preview. Read-only.
 
 ### Card content
 

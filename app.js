@@ -1,7 +1,7 @@
 // UI wiring: screens, card rendering, answers and save triggers.
 // All logic lives in lib/; this file only talks to the DOM.
 import { parseCsv } from './lib/csv.js';
-import { buildSession, counts, DIRECTIONS } from './lib/study.js';
+import { buildSession, counts, DIRECTIONS, KNOWN_STREAK, wordsWithStatus } from './lib/study.js';
 import { Session } from './lib/session.js';
 import { AuthError, checkWriteAccess, loadProgress, loadVocab, saveProgress } from './lib/github.js';
 import { ProgressStore } from './lib/store.js';
@@ -209,6 +209,24 @@ function answer(correct) {
   else renderCard();
 }
 
+const STATUS_LABEL = { known: 'Known', learning: 'Learning', new: 'New' };
+
+function showList(status) {
+  const dirProgress = state.store.data[state.direction];
+  const words = wordsWithStatus(state.words, dirProgress, status);
+  const direction = state.direction === 'gr-en' ? 'GR → EN' : 'EN → GR';
+  $('list-title').textContent = `${STATUS_LABEL[status]} · ${direction} · ${words.length}`;
+  $('word-list').replaceChildren(...words.map((word) => {
+    const li = document.createElement('li');
+    li.append(line('gr', word.basic), line('en', word.translation));
+    if (status === 'learning') li.append(line('streak', `${dirProgress[word.basic].streak}/${KNOWN_STREAK}`));
+    return li;
+  }));
+  $('list-empty').hidden = words.length > 0;
+  show('list');
+  window.scrollTo(0, 0);
+}
+
 function showSummary() {
   const { total, firstTry, missed } = state.session.summary();
   $('summary-text').textContent = `${firstTry}/${total} right on first try` + (missed ? `, ${missed} moved to Learning.` : '.');
@@ -220,6 +238,11 @@ $('token-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sav
 $('retry').addEventListener('click', boot);
 bindChoice('direction');
 bindChoice('size');
+$('counts').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-status]');
+  if (button) showList(button.dataset.status);
+});
+$('list-back').addEventListener('click', () => show('start'));
 $('regenerate').addEventListener('click', () => drawPreview(basicsOf(state.preview)));
 $('start').addEventListener('click', startSession);
 $('change-token').addEventListener('click', () => showTokenScreen());

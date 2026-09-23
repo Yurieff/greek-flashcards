@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  applyAnswer, buildSession, counts, emptyProgress, KNOWN_STREAK, mergeProgress, pickSession,
+  applyAnswer, buildSession, counts, emptyProgress, KNOWN_STREAK, mergeProgress, pickSession, wordsWithStatus,
 } from '../lib/study.js';
 
 const T = '2026-09-23T10:00:00.000Z';
@@ -84,4 +84,16 @@ Deno.test('mergeProgress: first argument wins ties, missing directions are fine'
   const theirs = { streak: 0, status: 'learning', lastSeen: T };
   assert.equal(mergeProgress({ 'gr-en': { x: mine } }, { 'gr-en': { x: theirs } })['gr-en'].x, mine);
   assert.deepEqual(mergeProgress(emptyProgress(), {}), emptyProgress());
+});
+
+Deno.test('wordsWithStatus lists one pile, ignoring progress for removed words', () => {
+  const extra = { ...PROGRESS, gone: { streak: 3, status: 'known', lastSeen: T } };
+  assert.deepEqual(basics(wordsWithStatus(WORDS, extra, 'known')), ['c', 'd']);
+  assert.deepEqual(basics(wordsWithStatus(WORDS, extra, 'learning')), ['a', 'b']);
+  assert.deepEqual(basics(wordsWithStatus(WORDS, extra, 'new')), ['e', 'f']);
+});
+
+Deno.test('wordsWithStatus sorts in Greek alphabetical order, accents included', () => {
+  const greek = ['γάτα', 'άνθρωπος', 'βάρκα', 'αγορά'].map(word);
+  assert.deepEqual(basics(wordsWithStatus(greek, {}, 'new')), ['αγορά', 'άνθρωπος', 'βάρκα', 'γάτα']);
 });

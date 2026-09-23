@@ -82,10 +82,23 @@ input {
 .segmented button { border: none; background: transparent; border-radius: 10px; min-height: 44px; }
 .segmented button[aria-pressed="true"] { background: var(--surface); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
 
-.counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
-.counts div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
-.counts dt { font-size: 13px; color: var(--muted); }
-.counts dd { margin: 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.counts button { display: flex; flex-direction: column; align-items: center; padding: 12px; }
+.count-label { font-size: 13px; color: var(--muted); }
+.count-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.word-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.word-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.word-list p { margin: 0; }
+.word-list .gr { font-weight: 600; }
+.word-list .en { grid-column: 1; font-size: 15px; color: var(--muted); }
+.word-list .streak { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .preview {
   display: flex;
