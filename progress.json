@@ -1,40 +1,30 @@
 {
  "version": 1,
  "gr-en": {
-  "υποφέρω": {
+  "κρύβω": {
+   "streak": 3,
+   "status": "known",
+   "lastSeen": "2026-09-23T14:49:22.049Z"
+  },
+  "ο ξεναγός": {
+   "streak": 3,
+   "status": "known",
+   "lastSeen": "2026-09-23T14:49:22.049Z"
+  },
+  "ο ξενοδόχος": {
+   "streak": 3,
+   "status": "known",
+   "lastSeen": "2026-09-23T14:49:22.049Z"
+  },
+  "το οινόπνευμα": {
    "streak": 1,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:44:12.656Z"
+   "lastSeen": "2026-09-23T14:49:22.049Z"
   },
-  "προφταίνω": {
-   "streak": 0,
+  "το παυσίπονο": {
+   "streak": 2,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:45:06.971Z"
-  },
-  "σκέφτομαι": {
-   "streak": 1,
-   "status": "learning",
-   "lastSeen": "2026-09-23T14:44:01.887Z"
-  },
-  "η έκτακτη ανάγκη": {
-   "streak": 1,
-   "status": "learning",
-   "lastSeen": "2026-09-23T14:44:37.161Z"
-  },
-  "η ανοιχτή επιστολή": {
-   "streak": 1,
-   "status": "learning",
-   "lastSeen": "2026-09-23T14:45:11.629Z"
-  },
-  "ξηρός": {
-   "streak": 1,
-   "status": "learning",
-   "lastSeen": "2026-09-23T14:44:50.224Z"
-  },
-  "ανατολικός": {
-   "streak": 1,
-   "status": "learning",
-   "lastSeen": "2026-09-23T14:44:47.405Z"
+   "lastSeen": "2026-09-23T14:49:22.049Z"
   }
  },
  "en-gr": {}
