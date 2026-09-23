@@ -1,0 +1,137 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --muted: #6b6b70;
+  --line: #e2dfd8;
+  --accent: #1f5fbf;
+  --right: #1e7a46;
+  --wrong: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141416;
+    --surface: #1f1f23;
+    --text: #f2f2f4;
+    --muted: #a0a0a8;
+    --line: #34343a;
+    --accent: #6ea0ff;
+    --right: #4cc38a;
+    --wrong: #ff7b72;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+main {
+  max-width: 520px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+.screen { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.screen[hidden] { display: none; }
+.centered { justify-content: center; text-align: center; }
+.centered-text { text-align: center; margin: 0; }
+h1 { font-size: 26px; margin: 8px 0 0; }
+a { color: var(--accent); }
+code { font-size: 15px; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-height: 48px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.link { background: none; border: none; color: var(--accent); min-height: 0; padding: 8px; align-self: center; }
+input {
+  font: inherit;
+  width: 100%;
+  padding: 12px 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.label { margin: 0 0 -8px; font-size: 14px; color: var(--muted); }
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--line);
+  border-radius: 14px;
+}
+.segmented button { border: none; background: transparent; border-radius: 10px; min-height: 44px; }
+.segmented button[aria-pressed="true"] { background: var(--surface); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+
+.counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
+.counts div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
+.counts dt { font-size: 13px; color: var(--muted); }
+.counts dd { margin: 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.muted { color: var(--muted); font-size: 14px; }
+.error { color: var(--wrong); margin: 0; }
+
+.study-bar { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.study-bar .link { align-self: auto; font-size: 20px; }
+.card {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+  cursor: pointer;
+  user-select: none;
+}
+.card p { margin: 0; }
+.card > div { display: flex; flex-direction: column; gap: 8px; }
+.card .back { border-top: 1px solid var(--line); padding-top: 16px; }
+.card .back[hidden] { display: none; }
+.big { font-size: 30px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.hint { color: var(--muted); }
+.forms { font-size: 18px; }
+.ety { font-size: 14px; color: var(--muted); }
+
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.answers[hidden] { display: none; }
+.answers .wrong { color: var(--wrong); border-color: var(--wrong); font-weight: 600; }
+.answers .right { color: var(--right); border-color: var(--right); font-weight: 600; }
+
+.badge {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 1;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.badge.bad { color: var(--wrong); border-color: var(--wrong); }

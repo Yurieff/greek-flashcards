@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Greek Flashcards</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <span id="save-badge" class="badge" hidden></span>
+  <main>
+    <section id="screen-loading" class="screen centered">
+      <p id="loading-text" class="muted">Loading…</p>
+      <button id="retry" hidden>Retry</button>
+    </section>
+
+    <section id="screen-token" class="screen" hidden>
+      <h1>Greek Flashcards</h1>
+      <p>Paste your GitHub token to connect this phone.</p>
+      <input id="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
+      <button id="token-save" class="primary">Save</button>
+      <p id="token-error" class="error" hidden></p>
+      <details>
+        <summary>How to create a token</summary>
+        <ol>
+          <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+          <li>Name: <code>greek-flashcards</code>. Expiration: 1 year.</li>
+          <li>Repository access: <b>Only select repositories</b> → <code>Yurieff/greek-flashcards</code>.</li>
+          <li>Permissions → Repository permissions → <b>Contents: Read and write</b>.</li>
+          <li>Generate token, copy it, paste it above.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="screen-start" class="screen" hidden>
+      <h1>Greek Flashcards</h1>
+      <p class="label">Direction</p>
+      <div id="direction" class="segmented">
+        <button data-value="gr-en">GR → EN</button>
+        <button data-value="en-gr">EN → GR</button>
+      </div>
+      <p class="label">Cards per round</p>
+      <div id="size" class="segmented">
+        <button data-value="10">10</button>
+        <button data-value="20">20</button>
+        <button data-value="50">50</button>
+      </div>
+      <dl class="counts">
+        <div><dt>Known</dt><dd id="count-known">0</dd></div>
+        <div><dt>Learning</dt><dd id="count-learning">0</dd></div>
+        <div><dt>New</dt><dd id="count-new">0</dd></div>
+      </dl>
+      <button id="start" class="primary">Start</button>
+      <p id="skipped-note" class="muted" hidden></p>
+      <button id="change-token" class="link">Change token</button>
+    </section>
+
+    <section id="screen-study" class="screen" hidden>
+      <div class="study-bar">
+        <button id="quit" class="link" aria-label="End round">✕</button>
+        <span id="study-progress" class="muted"></span>
+      </div>
+      <div id="card" class="card" role="button" tabindex="0">
+        <div id="card-front"></div>
+        <div id="card-back" class="back" hidden></div>
+      </div>
+      <p id="tap-hint" class="muted centered-text">Tap the card to see the answer</p>
+      <div id="answers" class="answers" hidden>
+        <button id="wrong" class="wrong">✗ Didn't know</button>
+        <button id="right" class="right">✓ Knew it</button>
+      </div>
+    </section>
+
+    <section id="screen-summary" class="screen centered" hidden>
+      <h1>Round done</h1>
+      <p id="summary-text"></p>
+      <button id="again" class="primary">Another round</button>
+      <button id="back">Back</button>
+    </section>
+  </main>
+</body>
+</html>
