@@ -2,24 +2,24 @@
  "version": 1,
  "gr-en": {
   "ανάβω": {
-   "streak": 1,
+   "streak": 2,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:06:43.792Z"
+   "lastSeen": "2026-09-23T14:07:40.455Z"
   },
   "αστικές συγκοινωνίες": {
-   "streak": 1,
+   "streak": 0,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:06:42.567Z"
+   "lastSeen": "2026-09-23T14:07:40.454Z"
   },
   "έχω υπόψη": {
-   "streak": 1,
+   "streak": 2,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:06:42.567Z"
+   "lastSeen": "2026-09-23T14:07:40.456Z"
   },
   "λαμβάνω υπόψιν": {
-   "streak": 1,
+   "streak": 2,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:06:42.567Z"
+   "lastSeen": "2026-09-23T14:07:40.456Z"
   },
   "η συγκοινωνία": {
    "streak": 1,
@@ -47,9 +47,9 @@
    "lastSeen": "2026-09-23T14:06:43.797Z"
   },
   "καταναλώνω": {
-   "streak": 1,
+   "streak": 2,
    "status": "learning",
-   "lastSeen": "2026-09-23T14:06:43.801Z"
+   "lastSeen": "2026-09-23T14:07:40.456Z"
   }
  },
  "en-gr": {}
