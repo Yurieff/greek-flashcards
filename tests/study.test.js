@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  applyAnswer, buildSession, counts, emptyProgress, KNOWN_STREAK, mergeProgress, pickSession, statusOf, wordsWithStatus,
+  applyAnswer, buildSession, counts, emptyProgress, KNOWN_STREAK, mergeProgress, pickSession, wordsWithStatus,
 } from '../lib/study.js';
 
 const T = '2026-09-23T10:00:00.000Z';
@@ -96,10 +96,4 @@ Deno.test('wordsWithStatus lists one pile, ignoring progress for removed words',
 Deno.test('wordsWithStatus sorts in Greek alphabetical order, accents included', () => {
   const greek = ['γάτα', 'άνθρωπος', 'βάρκα', 'αγορά'].map(word);
   assert.deepEqual(basics(wordsWithStatus(greek, {}, 'new')), ['αγορά', 'άνθρωπος', 'βάρκα', 'γάτα']);
-});
-
-Deno.test('statusOf: no entry is new, known stays known, anything else is learning', () => {
-  assert.equal(statusOf(undefined), 'new');
-  assert.equal(statusOf(PROGRESS.c), 'known');
-  assert.equal(statusOf(PROGRESS.a), 'learning');
 });

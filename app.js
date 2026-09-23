@@ -1,8 +1,7 @@
 // UI wiring: screens, card rendering, answers and save triggers.
 // All logic lives in lib/; this file only talks to the DOM.
 import { parseCsv } from './lib/csv.js';
-import { buildSession, counts, DIRECTIONS, KNOWN_STREAK, statusOf, wordsWithStatus } from './lib/study.js';
-import { parseEtymology, partOfSpeech, splitArticle } from './lib/card.js';
+import { buildSession, counts, DIRECTIONS, KNOWN_STREAK, wordsWithStatus } from './lib/study.js';
 import { Session } from './lib/session.js';
 import { AuthError, checkWriteAccess, loadProgress, loadVocab, saveProgress } from './lib/github.js';
 import { ProgressStore } from './lib/store.js';
@@ -11,8 +10,7 @@ const $ = (id) => document.getElementById(id);
 const SAVE_EVERY = 5;
 const RETRY_MS = 30_000;
 const SIZES = ['10', '20', '50'];
-const BADGE = { unsaved: '', saving: 'Saving…', saved: 'Synced', error: 'Not saved', auth: 'Token rejected' };
-const RING = 2 * Math.PI * 44; // circumference of the summary ring (r = 44)
+const BADGE = { unsaved: '', saving: 'saving…', saved: 'saved ✓', error: '⚠ not saved', auth: '⚠ token rejected' };
 
 const prefs = {
   get(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } },
@@ -29,17 +27,12 @@ const state = {
   size: oneOf(prefs.get('gf-size', '20'), SIZES, '20'),
   preview: [],
   roundWords: [],
-  roundStatus: new Map(), // basic -> status when the round started
   answersSinceSave: 0,
   saveStatus: 'saved',
 };
 
 function show(name) {
   for (const screen of document.querySelectorAll('.screen')) screen.hidden = screen.id !== `screen-${name}`;
-  // The save pill sits in the shown screen's header; screens without one let it float.
-  const home = $(`badge-home-${name}`);
-  if (home) home.append($('save-badge'));
-  else document.body.prepend($('save-badge'));
 }
 
 function setSaveStatus(status) {
@@ -47,7 +40,6 @@ function setSaveStatus(status) {
   const badge = $('save-badge');
   badge.textContent = BADGE[status];
   badge.hidden = !BADGE[status];
-  badge.classList.toggle('good', status === 'saved');
   badge.classList.toggle('bad', status === 'error' || status === 'auth');
 }
 
@@ -63,7 +55,8 @@ async function connect(token) {
   const [csv] = await Promise.all([loadVocab(token), store.load(), checkWriteAccess(token)]);
   ({ words: state.words, skipped: state.skipped } = parseCsv(csv));
   state.store = store;
-  setSaveStatus(store.status);
+  state.saveStatus = store.status;
+  $('save-badge').hidden = true;
 }
 
 async function boot() {
@@ -121,13 +114,9 @@ function showStart(avoid = new Set()) {
     }
   }
   const c = counts(state.words, state.store.data[state.direction]);
-  const total = state.words.length;
-  $('count-total').textContent = total;
-  for (const status of ['known', 'learning', 'new']) {
-    $(`count-${status}`).textContent = c[status];
-    $(`bar-${status}`).hidden = c[status] === 0;
-  }
-  for (const status of ['known', 'learning']) $(`bar-${status}`).style.width = `${total ? (100 * c[status]) / total : 0}%`;
+  $('count-known').textContent = c.known;
+  $('count-learning').textContent = c.learning;
+  $('count-new').textContent = c.new;
   drawPreview(avoid);
   $('skipped-note').textContent = `${state.skipped} row(s) in vocab.csv could not be read and were skipped.`;
   $('skipped-note').hidden = state.skipped === 0;
@@ -146,17 +135,12 @@ function bindChoice(id) {
 
 function drawPreview(avoid = new Set()) {
   state.preview = buildSession(state.words, state.store.data[state.direction], Number(state.size), { avoid });
-  const dirProgress = state.store.data[state.direction];
   const front = (word) => (state.direction === 'gr-en' ? word.basic : word.translation);
   $('preview').replaceChildren(...state.preview.map((word) => {
     const li = document.createElement('li');
     li.textContent = front(word);
-    if (state.direction === 'gr-en') li.lang = 'el';
-    li.classList.toggle('learning', statusOf(dirProgress[word.basic]) === 'learning');
     return li;
   }));
-  const n = state.preview.length;
-  $('start-count').textContent = `${n} card${n === 1 ? '' : 's'}`;
   $('start').disabled = state.preview.length === 0;
   $('regenerate').disabled = state.preview.length === 0;
 }
@@ -167,123 +151,48 @@ function startSession() {
   if (!state.preview.length) return;
   state.session = new Session(state.preview);
   state.roundWords = state.preview;
-  const dirProgress = state.store.data[state.direction];
-  state.roundStatus = new Map(state.preview.map((word) => [word.basic, statusOf(dirProgress[word.basic])]));
   state.answersSinceSave = 0;
   renderCard();
   show('study');
 }
 
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text) node.textContent = text;
-  return node;
-}
-
-const line = (className, text) => el('p', className, text);
-
-function headword(word) {
-  const { article, lemma } = splitArticle(word.basic);
-  const p = el('p', 'headword');
-  p.lang = 'el';
-  if (article) p.append(el('span', 'article', article));
-  p.append(el('span', 'lemma', lemma));
+function line(className, text) {
+  const p = document.createElement('p');
+  p.className = className;
+  p.textContent = text;
   return p;
 }
-
-function gloss(word) {
-  const block = el('div', 'gloss-block');
-  block.append(line('gloss', word.translation));
-  if (word.additional) block.append(line('also', `also: ${word.additional}`));
-  return block;
-}
-
-function forms(word) {
-  if (!word.past && !word.future) return null;
-  const grid = el('div', 'forms');
-  for (const [label, value] of [['Past', word.past], ['Future', word.future]]) {
-    if (!value) continue;
-    const cell = el('div', 'form');
-    const text = el('span', 'form-value', value);
-    text.lang = 'el';
-    cell.append(el('span', 'form-label', label), text);
-    grid.append(cell);
-  }
-  return grid;
-}
-
-function pieceNode({ gr, en, note }) {
-  const box = el('div', 'piece');
-  if (note) box.append(el('span', 'piece-note', note));
-  if (gr) {
-    const g = el('span', 'piece-gr', gr);
-    g.lang = 'el';
-    box.append(g);
-  }
-  if (en) box.append(el('span', 'piece-en', en));
-  return box;
-}
-
-function origin(word) {
-  if (!word.etymology) return null;
-  const block = el('div', 'origin');
-  block.append(el('span', 'section-label', 'Origin'));
-  const parsed = parseEtymology(word.etymology);
-  if (!parsed) {
-    block.append(line('ety-text', word.etymology));
-    return block;
-  }
-  const row = el('div', 'pieces');
-  parsed.parts.forEach((part, i) => {
-    if (i) row.append(el('span', 'joiner', '+'));
-    row.append(pieceNode(part));
-  });
-  if (parsed.result) row.append(el('span', 'joiner', '→'), pieceNode(parsed.result));
-  block.append(row);
-  return block;
-}
-
-function seenAs(word) {
-  const seen = word.initial?.toLocaleLowerCase('el');
-  if (!seen || seen === word.basic.toLocaleLowerCase('el') || seen === splitArticle(word.basic).lemma.toLocaleLowerCase('el')) return null;
-  const p = line('seen', 'Seen in the text as ');
-  const form = el('span', '', word.initial);
-  form.lang = 'el';
-  p.append(form);
-  return p;
-}
-
-const STATUS_TAG = { known: 'Known', learning: 'Learning', new: 'New' };
 
 function renderCard() {
   const word = state.session.current;
-  const grEn = state.direction === 'gr-en';
-  const front = grEn ? [headword(word)] : [gloss(word)];
-  const back = grEn
-    ? [forms(word), el('div', 'rule'), gloss(word), origin(word), seenAs(word)]
-    : [headword(word), forms(word), origin(word), seenAs(word)];
-  const status = state.roundStatus.get(word.basic) ?? 'new';
-  $('card-pos').textContent = partOfSpeech(word);
-  $('card-status').textContent = STATUS_TAG[status];
-  $('card-status').className = `status-tag ${status}`;
-  $('card-front').replaceChildren(...front);
+  const forms = [word.past, word.future].filter(Boolean).join(' · ');
+  const [front, back] = state.direction === 'gr-en'
+    ? [
+      [line('big', word.basic)],
+      [
+        line('big', word.translation),
+        word.additional && line('hint', word.additional),
+        word.etymology && line('ety', word.etymology),
+        word.initial && word.initial !== word.basic && line('ety', `seen as: ${word.initial}`),
+      ],
+    ]
+    : [
+      [line('big', word.translation), word.additional && line('hint', word.additional)],
+      [line('big', word.basic), forms && line('forms', forms), word.etymology && line('ety', word.etymology)],
+    ];
+  $('card-front').replaceChildren(...front.filter(Boolean));
   $('card-back').replaceChildren(...back.filter(Boolean));
   $('card-back').hidden = true;
-  $('card').classList.remove('revealed');
   $('answers').hidden = true;
-  $('show-answer').hidden = false;
-  const { cleared, total } = state.session;
-  $('study-progress').textContent = `${cleared + 1} / ${total}`;
-  $('study-bar-fill').style.width = `${(100 * cleared) / total}%`;
+  $('tap-hint').hidden = false;
+  $('study-progress').textContent = `${state.session.cleared + 1} / ${state.session.total}`;
 }
 
 function reveal() {
   if (!$('card-back').hidden) return;
   $('card-back').hidden = false;
-  $('card').classList.add('revealed');
   $('answers').hidden = false;
-  $('show-answer').hidden = true;
+  $('tap-hint').hidden = true;
 }
 
 function answer(correct) {
@@ -309,9 +218,7 @@ function showList(status) {
   $('list-title').textContent = `${STATUS_LABEL[status]} · ${direction} · ${words.length}`;
   $('word-list').replaceChildren(...words.map((word) => {
     const li = document.createElement('li');
-    const gr = line('gr', word.basic);
-    gr.lang = 'el';
-    li.append(gr, line('en', word.translation));
+    li.append(line('gr', word.basic), line('en', word.translation));
     if (status === 'learning') li.append(line('streak', `${dirProgress[word.basic].streak}/${KNOWN_STREAK}`));
     return li;
   }));
@@ -320,38 +227,10 @@ function showList(status) {
   window.scrollTo(0, 0);
 }
 
-function missedWords() {
-  return state.roundWords.filter((word) => state.session.missed.has(word.basic));
-}
-
 function showSummary() {
   const { total, firstTry, missed } = state.session.summary();
-  const dirProgress = state.store.data[state.direction];
-  const nowKnown = state.roundWords.filter((word) =>
-    state.roundStatus.get(word.basic) !== 'known' && statusOf(dirProgress[word.basic]) === 'known').length;
-  // "Well done!" for a good round, "Keep going!" otherwise.
-  $('summary-title').textContent = firstTry >= 0.7 * total ? 'Μπράβο!' : 'Συνέχισε!';
-  $('summary-score').textContent = firstTry;
-  $('summary-total').textContent = `of ${total}`;
-  $('ring-arc').style.strokeDasharray = `${total ? (RING * firstTry) / total : 0} ${RING}`;
-  $('summary-known').textContent = `+${nowKnown}`;
-  $('summary-missed').textContent = missed;
-  $('missed-list').replaceChildren(...missedWords().map((word) => {
-    const li = document.createElement('li');
-    const gr = line('gr', word.basic);
-    gr.lang = 'el';
-    li.append(gr, line('en', word.translation));
-    return li;
-  }));
-  $('missed-block').hidden = missed === 0;
-  $('drill').textContent = `Drill the ${missed} missed word${missed === 1 ? '' : 's'}`;
-  $('drill').hidden = missed === 0;
+  $('summary-text').textContent = `${firstTry}/${total} right on first try` + (missed ? `, ${missed} moved to Learning.` : '.');
   show('summary');
-}
-
-function drillMissed() {
-  state.preview = missedWords();
-  startSession();
 }
 
 $('token-save').addEventListener('click', saveToken);
@@ -369,7 +248,6 @@ $('start').addEventListener('click', startSession);
 $('change-token').addEventListener('click', () => showTokenScreen());
 $('token-cancel').addEventListener('click', () => showStart());
 $('card').addEventListener('click', reveal);
-$('show-answer').addEventListener('click', reveal);
 $('card').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }
 });
@@ -377,7 +255,6 @@ $('right').addEventListener('click', () => answer(true));
 $('wrong').addEventListener('click', () => answer(false));
 $('quit').addEventListener('click', () => { trySave(); showStart(basicsOf(state.roundWords)); });
 $('next').addEventListener('click', () => showStart(basicsOf(state.roundWords)));
-$('drill').addEventListener('click', drillMissed);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden' && state.store?.dirty) trySave();
 });

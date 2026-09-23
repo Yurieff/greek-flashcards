@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Greek Flashcards</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&family=Noto+Serif+Display:ital,wght@0,500;0,600;1,400&display=swap">
   <link rel="stylesheet" href="style.css">
   <script type="module" src="app.js"></script>
 </head>
@@ -15,158 +12,85 @@
   <main>
     <section id="screen-loading" class="screen centered">
       <p id="loading-text" class="muted">Loading…</p>
-      <button id="retry" class="secondary" hidden>Retry</button>
+      <button id="retry" hidden>Retry</button>
     </section>
 
-    <section id="screen-token" class="screen token" hidden>
-      <div class="masthead">
-        <p class="overline" lang="el">ΛΕΞΙΛΟΓΙΟ</p>
-        <p class="wordmark wordmark-lg">Greek Flashcards</p>
-        <div class="meander" aria-hidden="true"></div>
-      </div>
-      <div class="intro">
-        <h1>Connect this phone</h1>
-        <p class="muted">Your progress is saved to your GitHub repo, so every phone picks up where the last one stopped.</p>
-      </div>
-      <div class="field">
-        <label for="token-input">GitHub token</label>
-        <input id="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
-        <p id="token-error" class="error" hidden></p>
-        <button id="token-save" class="primary">Connect</button>
-        <button id="token-cancel" class="link" hidden>Cancel</button>
-      </div>
-      <div class="panel steps">
-        <p class="panel-title">Making a token takes a minute</p>
+    <section id="screen-token" class="screen" hidden>
+      <h1>Greek Flashcards</h1>
+      <p>Paste your GitHub token to connect this phone.</p>
+      <input id="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
+      <button id="token-save" class="primary">Save</button>
+      <button id="token-cancel" class="link" hidden>Cancel</button>
+      <p id="token-error" class="error" hidden></p>
+      <details>
+        <summary>How to create a token</summary>
         <ol>
-          <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → new fine-grained token</a></li>
-          <li>Name it <b>greek-flashcards</b>, expiry 1 year</li>
-          <li>Only select repositories → <b>Yurieff/greek-flashcards</b></li>
-          <li>Permissions → Contents: <b>Read and write</b></li>
-          <li>Generate, copy, and paste it above</li>
+          <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+          <li>Name: <code>greek-flashcards</code>. Expiration: 1 year.</li>
+          <li>Repository access: <b>Only select repositories</b> → <code>Yurieff/greek-flashcards</code>.</li>
+          <li>Permissions → Repository permissions → <b>Contents: Read and write</b>.</li>
+          <li>Generate token, copy it, paste it above.</li>
         </ol>
-      </div>
+      </details>
     </section>
 
     <section id="screen-start" class="screen" hidden>
-      <div class="masthead">
-        <div class="topline">
-          <p class="wordmark">Greek Flashcards</p>
-          <div id="badge-home-start" class="badge-home"></div>
-          <button id="change-token" class="icon-button" aria-label="Change GitHub token">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.25"/><circle cx="10" cy="12" r="2.25"/><circle cx="18" cy="18" r="2.25"/></svg>
-          </button>
-        </div>
-        <div class="meander" aria-hidden="true"></div>
+      <h1>Greek Flashcards</h1>
+      <p class="label">Direction</p>
+      <div id="direction" class="segmented">
+        <button data-value="gr-en">GR → EN</button>
+        <button data-value="en-gr">EN → GR</button>
       </div>
-
-      <div class="panel deck">
-        <p class="deck-total"><span id="count-total" class="deck-number">0</span> <span class="muted">words in your deck</span></p>
-        <div class="bar" aria-hidden="true">
-          <span id="bar-known" class="bar-known"></span>
-          <span id="bar-learning" class="bar-learning"></span>
-          <span id="bar-new" class="bar-new"></span>
-        </div>
-        <div id="counts" class="counts">
-          <button data-status="known"><span class="count-label"><i class="swatch known"></i>Known</span><span id="count-known" class="count-value">0</span></button>
-          <button data-status="learning"><span class="count-label"><i class="swatch learning"></i>Learning</span><span id="count-learning" class="count-value">0</span></button>
-          <button data-status="new"><span class="count-label"><i class="swatch new"></i>New</span><span id="count-new" class="count-value">0</span></button>
-        </div>
+      <p class="label">Cards per round</p>
+      <div id="size" class="segmented">
+        <button data-value="10">10</button>
+        <button data-value="20">20</button>
+        <button data-value="50">50</button>
       </div>
-
-      <div class="options">
-        <p class="label">Direction</p>
-        <div id="direction" class="segmented">
-          <button data-value="gr-en">Greek → English</button>
-          <button data-value="en-gr">English → Greek</button>
-        </div>
-        <p class="label">Cards per round</p>
-        <div id="size" class="segmented">
-          <button data-value="10">10</button>
-          <button data-value="20">20</button>
-          <button data-value="50">50</button>
-        </div>
+      <div id="counts" class="counts">
+        <button data-status="known"><span class="count-label">Known</span><span id="count-known" class="count-value">0</span></button>
+        <button data-status="learning"><span class="count-label">Learning</span><span id="count-learning" class="count-value">0</span></button>
+        <button data-status="new"><span class="count-label">New</span><span id="count-new" class="count-value">0</span></button>
       </div>
-
-      <div class="round">
-        <div class="row">
-          <p class="label">This round</p>
-          <button id="regenerate" class="text-button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>New draw
-          </button>
-        </div>
-        <ul id="preview" class="preview"></ul>
-        <p id="skipped-note" class="muted" hidden></p>
+      <p class="label">This round</p>
+      <ul id="preview" class="preview"></ul>
+      <div class="actions">
+        <button id="regenerate">🔀 Regenerate</button>
+        <button id="start" class="primary">Start</button>
       </div>
-
-      <button id="start" class="primary start">
-        <span>Start round</span>
-        <span class="start-meta"><span id="start-count">0 cards</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </button>
+      <p id="skipped-note" class="muted" hidden></p>
+      <button id="change-token" class="link">Change token</button>
     </section>
 
     <section id="screen-study" class="screen" hidden>
       <div class="study-bar">
-        <button id="quit" class="icon-button" aria-label="End round">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
-        <div class="track" aria-hidden="true"><div id="study-bar-fill" class="track-fill"></div></div>
-        <span id="study-progress" class="progress-text"></span>
-        <div id="badge-home-study" class="badge-home"></div>
+        <button id="quit" class="link" aria-label="End round">✕</button>
+        <span id="study-progress" class="muted"></span>
       </div>
-      <div id="card" class="card" role="button" tabindex="0" aria-label="Card — tap to show the answer">
-        <div class="card-meta">
-          <span id="card-pos"></span>
-          <span id="card-status" class="status-tag"></span>
-        </div>
-        <div id="card-front" class="card-front"></div>
-        <div id="card-back" class="card-back" hidden></div>
-        <p id="tap-hint" class="tap-hint">Tap to reveal</p>
+      <div id="card" class="card" role="button" tabindex="0">
+        <div id="card-front"></div>
+        <div id="card-back" class="back" hidden></div>
       </div>
-      <button id="show-answer" class="secondary">Show answer</button>
+      <p id="tap-hint" class="muted centered-text">Tap the card to see the answer</p>
       <div id="answers" class="answers" hidden>
-        <button id="wrong" class="wrong"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Didn’t know</button>
-        <button id="right" class="right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 9.5 17 19 7"/></svg>Knew it</button>
+        <button id="wrong" class="wrong">✗ Didn't know</button>
+        <button id="right" class="right">✓ Knew it</button>
       </div>
     </section>
 
     <section id="screen-list" class="screen" hidden>
       <div class="study-bar">
-        <button id="list-back" class="icon-button" aria-label="Back">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-        </button>
-        <span id="list-title" class="list-title"></span>
-        <div id="badge-home-list" class="badge-home"></div>
+        <button id="list-back" class="link">‹ Back</button>
+        <span id="list-title" class="muted"></span>
       </div>
       <p id="list-empty" class="muted" hidden>No words here yet.</p>
       <ul id="word-list" class="word-list"></ul>
     </section>
 
-    <section id="screen-summary" class="screen summary" hidden>
-      <div class="intro">
-        <div class="row"><p class="overline">ROUND DONE</p><div id="badge-home-summary" class="badge-home"></div></div>
-        <h1 id="summary-title" class="wordmark wordmark-lg" lang="el">Μπράβο!</h1>
-      </div>
-      <div class="panel score">
-        <div class="ring">
-          <svg viewBox="0 0 104 104" aria-hidden="true">
-            <circle class="ring-track" cx="52" cy="52" r="44"/>
-            <circle id="ring-arc" class="ring-arc" cx="52" cy="52" r="44" transform="rotate(-90 52 52)"/>
-          </svg>
-          <p class="ring-label"><span id="summary-score" class="ring-number">0</span><span id="summary-total" class="muted">of 0</span></p>
-        </div>
-        <div class="score-stats">
-          <p><span id="summary-known" class="stat stat-right">+0</span><span class="muted">moved to Known</span></p>
-          <p><span id="summary-missed" class="stat stat-wrong">0</span><span class="muted">need another look</span></p>
-        </div>
-      </div>
-      <div id="missed-block" class="missed">
-        <p class="label">Review these</p>
-        <ul id="missed-list" class="word-list"></ul>
-      </div>
-      <div class="summary-actions">
-        <button id="next" class="primary">Next round</button>
-        <button id="drill" class="secondary" hidden>Drill the missed words</button>
-      </div>
+    <section id="screen-summary" class="screen centered" hidden>
+      <h1>Round done</h1>
+      <p id="summary-text"></p>
+      <button id="next" class="primary">Next round</button>
     </section>
   </main>
 </body>
