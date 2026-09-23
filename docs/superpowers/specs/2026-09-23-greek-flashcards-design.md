@@ -29,12 +29,13 @@ Fields are quoted with `"..."` only when they contain a comma. Rows are appended
 
 ```
 main branch (served by GitHub Pages)
-  index.html          page shell, three screens: token, start, study (+ summary)
+  index.html          page shell: token, start, study, word list, summary screens
   style.css           mobile-first styles, light/dark
   app.js              UI wiring, screen switching, event handlers
   lib/csv.js          parseCsv(text) -> { words, skipped }
   lib/study.js        card state transitions, session building, merge
   lib/session.js      in-session card queue (re-inserting missed cards)
+  lib/card.js         word type, article split, etymology pieces for the card
   lib/github.js       GitHub API calls: read vocab, read/write progress
   lib/store.js        ProgressStore: in-memory progress + save/merge/retry
   vocab.csv           copy of greek_vocab.csv
@@ -47,7 +48,7 @@ progress branch (not served)
   progress.json
 ```
 
-Plain HTML/CSS/ES modules, no build step, no dependencies.
+Plain HTML/CSS/ES modules, no build step, no dependencies. Fonts come from Google Fonts; without them the page falls back to Georgia and the system font.
 
 ## Units
 
@@ -106,18 +107,25 @@ Uses the GitHub REST contents API with the stored token (`Authorization: Bearer 
 
 ## Screens
 
-1. **Token screen** (only when no token stored): input field, "Save" button, short instructions for creating the fine-grained token. Token is validated by loading vocab and progress and by `checkWriteAccess()`; stored in `localStorage` only on success, replacing the old token only then. Opened via "Change token", the screen has a "Cancel" button back to the start screen (the old token stays), and answers not yet saved carry over to the new token (`absorb`).
-2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, a "This round" preview listing each card's front (Greek for GR→EN, English for EN→GR) with "🔀 Regenerate" (new set avoiding the shown words) and "Start" (studies exactly the previewed words); changing direction or size redraws the preview, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
-3. **Study screen**: progress indicator (e.g. 7/20), the card; tapping it reveals the back below the front (front stays visible), then "✗ Didn't know" / "✓ Knew it". Save-status badge.
-4. **Summary screen** (see Session queue).
-5. **Word list screen**: tapping the Known / Learning / New tile on the start screen lists those words for the selected direction, in Greek alphabetical order: basic form and translation, plus the streak (e.g. 2/3) for Learning words. "‹ Back" returns to the start screen without redrawing the preview. Read-only.
+Look: "Aegean paper" (design canvas https://claude.ai/artifact/Q79EDhKhQUndYRaKtBvVS8). Limestone background, one Aegean-blue accent, olive/amber/terracotta for known/learning/wrong. Noto Serif Display for Greek words and headings, Commissioner for UI. Light and dark follow the phone setting. No emoji; icons are inline SVG.
+
+1. **Token screen** (only when no token stored): "GitHub token" field, "Connect" button, the five token steps always visible. Token is validated by loading vocab and progress and by `checkWriteAccess()`; stored in `localStorage` only on success, replacing the old token only then. Opened via the settings button on the start screen, the screen has a "Cancel" button back to the start screen (the old token stays), and answers not yet saved carry over to the new token (`absorb`).
+2. **Start screen**: header with the save pill and a settings button (opens the token screen). A deck card shows the word total, a stacked Known / Learning / New bar and the three counts for the selected direction. Direction toggle (Greek → English / English → Greek), session size (10 / 20 / 50, default 20). "This round" lists each card's front (Greek for GR→EN, English for EN→GR) as chips, with a dot on Learning words, and a "New draw" button (new set avoiding the shown words). "Start round · N cards" studies exactly the previewed words. Changing direction or size redraws the preview. Small note if CSV rows were skipped. Last direction/size remembered in `localStorage`. The start screen fits the phone; only the chip list scrolls.
+3. **Study screen**: close button, progress bar and "7 / 20", save pill. The card's top row shows the word type (see Card content) and the word's status when the round started. "Show answer" (or tapping the card) reveals the back; the front stays, smaller, at the top. Then "Didn't know" / "Knew it".
+4. **Summary screen** (see Session queue): "Μπράβο!" when at least 70% were right on the first try, otherwise "Συνέχισε!". A ring shows first-try right out of total, "+N moved to Known" (words that became Known this round) and "M need another look". The missed words are listed with translations. "Next round", and "Drill the M missed words", which starts a round of just those words.
+5. **Word list screen**: tapping Known / Learning / New on the start screen lists those words for the selected direction, in Greek alphabetical order: basic form and translation, plus the streak (e.g. 2/3) for Learning words. Back returns to the start screen without redrawing the preview. Read-only.
 
 ### Card content
 
 | Direction | Front | Back |
 |---|---|---|
-| GR→EN | basic form | translation (large), additional meaning, etymology, "seen as: initial word" |
-| EN→GR | translation + additional meaning as a hint | basic form (large), past / future simple for verbs, etymology |
+| GR→EN | basic form (article small above the word) | past / future forms, translation (large), additional meaning, origin, "Seen in the text as: initial word" |
+| EN→GR | translation + additional meaning as a hint | basic form, past / future forms, origin, "Seen in the text as" |
+
+`lib/card.js` works out the extras from the CSV:
+- **Word type**: "Noun · masculine / feminine / neuter / plural" from the article (ο / η / το / οι, τα); "Verb" when a past form exists; otherwise no label.
+- **Origin**: an etymology shaped like `A (meaning) + B (meaning) → C (meaning)` is shown as pieces, with "Ancient Greek " moved into a small note. Anything else is shown as plain text.
+- **Seen in the text** is hidden when the initial word only differs from the basic form by the article or capitalisation.
 
 Empty fields are not rendered.
 
@@ -125,7 +133,7 @@ Empty fields are not rendered.
 
 - Save after every 5 answers, at session end, and on `visibilitychange` → hidden.
 - Only one save in flight at a time; answers made meanwhile are included in the next save.
-- Badge: "saved ✓" / "saving…" / "⚠ not saved" / "⚠ token rejected". A failure stays shown until a save succeeds; "⚠ not saved" retries every 30 s and on each answer. "⚠ token rejected" does not retry; returning to the start screen opens the token screen instead.
+- Save pill (in the screen header): "Synced" / "Saving…" / "Not saved" / "Token rejected". A failure stays shown until a save succeeds; "Not saved" retries every 30 s and on each answer. "Token rejected" does not retry; returning to the start screen opens the token screen instead.
 - Nothing except the token and UI preferences is stored on the phone. Unsaved answers live in memory only; if the page is closed while offline, those answers are lost (accepted trade-off).
 
 ## Sync (Mac side)
