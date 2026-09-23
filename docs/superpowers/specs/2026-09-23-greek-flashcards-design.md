@@ -80,10 +80,10 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
 - Correct answer: card leaves the queue.
 - Wrong answer: card is re-inserted 3–5 positions later (or at the end if fewer remain) and must be answered correctly once before the session ends.
 - Every answer calls `applyAnswer` (via `ProgressStore.record`) and updates in-memory progress.
+- End: summary "X/N right on first try, M moved to Learning", buttons "Another round" / "Back".
 
 ### lib/store.js
 `ProgressStore` holds progress in memory, records answers, and saves through injected `load`/`save` functions (so it is unit-testable without the network). It runs one save at a time, loops while new answers arrived during a save, and on conflict reloads, merges (local wins ties) and retries once.
-- End: summary "X/N right on first try, M moved to Learning", buttons "Another round" / "Back".
 
 ### lib/github.js
 Uses the GitHub REST contents API with the stored token (`Authorization: Bearer <token>`).
