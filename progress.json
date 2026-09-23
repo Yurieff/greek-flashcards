@@ -1,5 +1,26 @@
 {
  "version": 1,
- "gr-en": {},
+ "gr-en": {
+  "το έθιμο": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:24:53.685Z"
+  },
+  "αρμόδιος": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:24:58.965Z"
+  },
+  "ανώτατος": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:25:03.586Z"
+  },
+  "χρεώνω": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:25:13.489Z"
+  }
+ },
  "en-gr": {}
 }
