@@ -84,14 +84,15 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
 - End: summary "X/N right on first try, M moved to Learning", button "Next round" → start screen with a fresh preview that avoids the words just studied.
 
 ### lib/store.js
-`ProgressStore` holds progress in memory, records answers, and saves through injected `load`/`save` functions (so it is unit-testable without the network). It runs one save at a time, loops while new answers arrived during a save, and on conflict reloads, merges (local wins ties) and retries once.
+`ProgressStore` holds progress in memory, records answers, and saves through injected `load`/`save` functions (so it is unit-testable without the network). It runs one save at a time, loops while new answers arrived during a save, and on conflict reloads, merges (local wins ties) and retries once. It reports a status (`unsaved` / `saving` / `saved` / `error` / `auth`); after a failed save, `error`/`auth` stays reported through later answers until a save succeeds. `absorb(data)` takes over unsaved answers from a previous store (used when the token is changed mid-use).
 
 ### lib/github.js
 Uses the GitHub REST contents API with the stored token (`Authorization: Bearer <token>`).
 - `loadVocab()` → GET `/repos/Yurieff/greek-flashcards/contents/vocab.csv?ref=main` with `Accept: application/vnd.github.raw` — always fresh, no Pages cache lag.
 - `loadProgress()` → GET `progress.json` on `ref=progress` → `{ data, sha }`. 404 → empty progress, sha null. The `progress` branch is created once during setup with an empty `progress.json`.
 - `saveProgress(data, sha)` → PUT with base64 (UTF-8 safe) content, message `Progress update`, branch `progress`. On 409/422 (sha conflict): reload, `mergeProgress`, retry once more.
-- 401/403 → "token invalid or expired" error.
+- `checkWriteAccess()` → PUT `progress.json` with an impossible sha (40 zeros). 409/422 → the token may write (nothing is written); 401/403/404 → token rejected. Needed because the repo is public: any token can read it, so a successful read proves nothing.
+- 401/403 → "token invalid or expired" error (`AuthError`); a 403 with `x-ratelimit-remaining: 0` is a rate-limit error instead. A 404 on `vocab.csv` also means the token cannot see the repo.
 
 ## progress.json format
 
@@ -105,7 +106,7 @@ Uses the GitHub REST contents API with the stored token (`Authorization: Bearer 
 
 ## Screens
 
-1. **Token screen** (only when no token stored): input field, "Save" button, short instructions for creating the fine-grained token. Token is validated by loading vocab; stored in `localStorage` only on success.
+1. **Token screen** (only when no token stored): input field, "Save" button, short instructions for creating the fine-grained token. Token is validated by loading vocab and progress and by `checkWriteAccess()`; stored in `localStorage` only on success, replacing the old token only then. Opened via "Change token", the screen has a "Cancel" button back to the start screen (the old token stays), and answers not yet saved carry over to the new token (`absorb`).
 2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, a "This round" preview listing each card's front (Greek for GR→EN, English for EN→GR) with "🔀 Regenerate" (new set avoiding the shown words) and "Start" (studies exactly the previewed words); changing direction or size redraws the preview, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
 3. **Study screen**: progress indicator (e.g. 7/20), the card; tapping it reveals the back below the front (front stays visible), then "✗ Didn't know" / "✓ Knew it". Save-status badge.
 4. **Summary screen** (see Session queue).
@@ -124,15 +125,15 @@ Empty fields are not rendered.
 
 - Save after every 5 answers, at session end, and on `visibilitychange` → hidden.
 - Only one save in flight at a time; answers made meanwhile are included in the next save.
-- Badge: "saved" / "saving…" / "⚠ not saved" (retries every 30 s and on next answer).
+- Badge: "saved ✓" / "saving…" / "⚠ not saved" / "⚠ token rejected". A failure stays shown until a save succeeds; "⚠ not saved" retries every 30 s and on each answer. "⚠ token rejected" does not retry; returning to the start screen opens the token screen instead.
 - Nothing except the token and UI preferences is stored on the phone. Unsaved answers live in memory only; if the page is closed while offline, those answers are lost (accepted trade-off).
 
 ## Sync (Mac side)
 
 `sync.sh`:
 1. Copy `greek_vocab.csv` from Dropbox to `vocab.csv` in the repo.
-2. If `git diff` shows no change → print "Already up to date" and exit.
-3. Otherwise commit `Update vocab: N words` (N = data rows) on `main` and `git push`.
+2. If `git diff` shows no change → print "vocab.csv already up to date"; otherwise commit only `vocab.csv` as `Update vocab: N words` (N = data rows) and print "Committed: N words".
+3. Always `git push origin main` and print "Pushed to GitHub". The local repo must stay on `main`.
 
 The `grvocab` SKILL.md gets a final step: run `sync.sh` after appending rows, and report whether it pushed.
 
@@ -141,7 +142,8 @@ The `grvocab` SKILL.md gets a final step: run `sync.sh` after appending rows, an
 | Situation | Behavior |
 |---|---|
 | No token | Token screen |
-| Token rejected (401/403) | Message + token screen |
+| Token rejected at load or when pasted (401/403, or no write access) | Message + token screen |
+| Token rejected while saving | Badge "⚠ token rejected" (keep studying); token screen on return to start; unsaved answers kept for the new token |
 | Network down at page load | Error message with "Retry" button (no cached data by design) |
 | Network down mid-session | Keep studying; badge "⚠ not saved"; retry |
 | Save conflict (another phone) | Reload, merge by latest `lastSeen`, retry |

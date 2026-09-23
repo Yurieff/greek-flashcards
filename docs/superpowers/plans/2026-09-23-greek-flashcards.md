@@ -1482,3 +1482,19 @@ At github.com/settings/personal-access-tokens/new: name `greek-flashcards`, expi
 - [ ] **Step 4: End-to-end sync check**
 
 Next time grvocab adds words: the reply ends with `Pushed to GitHub`; reloading the page shows the higher New count.
+
+---
+
+## Changes after this plan
+
+This plan records the original build (Tasks 1–7, completed 2026-09-23). Later changes were small, test-first updates made without a separate plan. The spec is updated for each one and is the current reference.
+
+| Commit | Change |
+|---|---|
+| `8dd986c` | Final-review fixes: a failed save stays shown until a save succeeds; the token check probes write access (`checkWriteAccess`); "Change token" keeps the old token until a new one connects (Cancel button, unsaved answers carried over via `ProgressStore.absorb`); a token rejected while saving leads to the token screen. |
+| `485c66c` | `vocab.csv` republished after quoting the etymology of `ο βοριάς` in the source CSV. |
+| `349ef92` | New words drawn randomly (not newest-first); start screen previews the round with 🔀 Regenerate (avoids the shown words); summary has a single "Next round" button. `pickSession`/`buildSession` take `{ random, avoid }`. |
+| `919d8f6` | Tapping Known / Learning / New opens a read-only word list (`wordsWithStatus`, Greek alphabetical order, streaks for Learning words). |
+
+Tests now: `deno test --allow-read tests/` → 47 passing.
+
