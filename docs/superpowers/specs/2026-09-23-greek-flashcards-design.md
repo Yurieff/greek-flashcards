@@ -34,10 +34,13 @@ main branch (served by GitHub Pages)
   app.js              UI wiring, screen switching, event handlers
   lib/csv.js          parseCsv(text) -> { words, skipped }
   lib/study.js        card state transitions, session building, merge
+  lib/session.js      in-session card queue (re-inserting missed cards)
   lib/github.js       GitHub API calls: read vocab, read/write progress
+  lib/store.js        ProgressStore: in-memory progress + save/merge/retry
   vocab.csv           copy of greek_vocab.csv
   sync.sh             copy CSV into repo, commit + push if changed
-  tests/*.test.js     deno tests for lib/csv.js and lib/study.js
+  tests/*.test.js     deno tests for everything in lib/
+  .nojekyll           serve files as-is (skip Jekyll build)
   docs/superpowers/   spec and plan
 
 progress branch (not served)
@@ -52,7 +55,10 @@ Plain HTML/CSS/ES modules, no build step, no dependencies.
 - `parseCsv(text)` → `{ words: Word[], skipped: number }`.
 - Handles quoted fields with commas, escaped quotes (`""`), CRLF/LF, BOM, trailing newline.
 - `Word = { initial, basic, past, future, translation, additional, etymology, index }`; `index` = row position (higher = newer).
-- Rows with the wrong column count or empty `basic form` are skipped and counted.
+- A quote opens a quoted field only at the start of a field; elsewhere it is a literal character (real data has `→ "in whatever way ever"` in an unquoted etymology).
+- Rows with **more** than 7 fields: the extra fields are joined back into `etymology` with `,` (real data has an unquoted comma in the last column: `Βορέας (Boreas, god of the North Wind)`).
+- Rows with fewer than 7 fields, an empty `basic form` or an empty `translation` are skipped and counted.
+- A repeated `basic form` keeps the first row; later duplicates are skipped and counted.
 
 ### lib/study.js
 Card state per word per direction: `{ streak: number, status: "learning" | "known", lastSeen: ISO string }`. A word with no entry is **New**.
@@ -70,16 +76,19 @@ Card state per word per direction: `{ streak: number, status: "learning" | "know
 - `counts(words, progressForDirection)` → `{ known, learning, new }`. Progress entries for words no longer in the CSV are ignored (kept in the file, not counted).
 - `mergeProgress(a, b)` → for every direction and word, keep the entry with the later `lastSeen`.
 
-### Session queue (in app.js)
+### Session queue (lib/session.js)
 - Correct answer: card leaves the queue.
 - Wrong answer: card is re-inserted 3–5 positions later (or at the end if fewer remain) and must be answered correctly once before the session ends.
-- Every answer calls `applyAnswer` and updates in-memory progress.
+- Every answer calls `applyAnswer` (via `ProgressStore.record`) and updates in-memory progress.
+
+### lib/store.js
+`ProgressStore` holds progress in memory, records answers, and saves through injected `load`/`save` functions (so it is unit-testable without the network). It runs one save at a time, loops while new answers arrived during a save, and on conflict reloads, merges (local wins ties) and retries once.
 - End: summary "X/N right on first try, M moved to Learning", buttons "Another round" / "Back".
 
 ### lib/github.js
 Uses the GitHub REST contents API with the stored token (`Authorization: Bearer <token>`).
 - `loadVocab()` → GET `/repos/Yurieff/greek-flashcards/contents/vocab.csv?ref=main` with `Accept: application/vnd.github.raw` — always fresh, no Pages cache lag.
-- `loadProgress()` → GET `progress.json` on `ref=progress` → `{ data, sha }`. 404 → empty progress, sha null.
+- `loadProgress()` → GET `progress.json` on `ref=progress` → `{ data, sha }`. 404 → empty progress, sha null. The `progress` branch is created once during setup with an empty `progress.json`.
 - `saveProgress(data, sha)` → PUT with base64 (UTF-8 safe) content, message `Progress update`, branch `progress`. On 409/422 (sha conflict): reload, `mergeProgress`, retry once more.
 - 401/403 → "token invalid or expired" error.
 
@@ -97,7 +106,7 @@ Uses the GitHub REST contents API with the stored token (`Authorization: Bearer 
 
 1. **Token screen** (only when no token stored): input field, "Save" button, short instructions for creating the fine-grained token. Token is validated by loading vocab; stored in `localStorage` only on success.
 2. **Start screen**: direction toggle (GR→EN / EN→GR), session size (10 / 20 / 50, default 20), counts for the selected direction, "Start" button, small note if CSV rows were skipped, "Change token" link. Last direction/size remembered in `localStorage`.
-3. **Study screen**: progress indicator (e.g. 7/20), the card, tap to flip, then "✗ Didn't know" / "✓ Knew it". Save-status badge.
+3. **Study screen**: progress indicator (e.g. 7/20), the card; tapping it reveals the back below the front (front stays visible), then "✗ Didn't know" / "✓ Knew it". Save-status badge.
 4. **Summary screen** (see Session queue).
 
 ### Card content
@@ -138,8 +147,8 @@ The `grvocab` SKILL.md gets a final step: run `sync.sh` after appending rows, an
 
 ## Testing
 
-- `deno test tests/` covers `lib/csv.js` (quoting, commas, CRLF, BOM, bad rows, the real `vocab.csv` parses with 0 skipped) and `lib/study.js` (state transitions incl. 3-in-a-row rule, session ordering/priority and size, counts, merge).
-- `lib/github.js` and the UI are verified manually: run locally with `python3 -m http.server`, then on the phone against the live GitHub Pages URL (load, answer, check `progress.json` commit on the `progress` branch, open on a second browser and confirm progress carries over).
+- `deno test --allow-read tests/` covers `lib/csv.js` (quoting, commas, CRLF, BOM, bad rows, duplicates, the real `vocab.csv` parses with 0 skipped), `lib/study.js` (state transitions incl. 3-in-a-row rule, session ordering/priority and size, counts, merge), `lib/session.js`, `lib/store.js` (fake API: conflicts, answers during a save, errors) and the UTF-8 base64 helpers in `lib/github.js`.
+- `lib/github.js` network calls are smoke-tested against the live repo from the Mac; the UI is verified manually: run locally with `python3 -m http.server`, then on the phone against the live GitHub Pages URL (load, answer, check `progress.json` commit on the `progress` branch, open on a second browser and confirm progress carries over).
 
 ## Out of scope
 
