@@ -92,7 +92,7 @@ Deno.test('extra fields are joined back into etymology', () => {
 });
 
 Deno.test('handles BOM, CRLF and a missing trailing newline', () => {
-  const { words } = parseCsv('﻿' + HEADER.replace('\n', '\r\n') + 'a,α,,,one,,\r\nb,β,,,two,,');
+  const { words } = parseCsv('\uFEFF' + HEADER.replace('\n', '\r\n') + 'a,α,,,one,,\r\nb,β,,,two,,');
   assert.deepEqual(words.map((w) => [w.basic, w.translation, w.index]), [['α', 'one', 0], ['β', 'two', 1]]);
 });
 
@@ -174,7 +174,7 @@ function splitRecords(text) {
 }
 
 export function parseCsv(text) {
-  const [, ...rows] = splitRecords(text.replace(/^﻿/, ''));
+  const [, ...rows] = splitRecords(text.replace(/^\uFEFF/, ''));
   const words = [];
   const seen = new Set();
   let skipped = 0;
