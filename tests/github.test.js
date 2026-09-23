@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  AuthError, ConflictError, decodeBase64, encodeBase64, loadProgress, loadVocab, saveProgress,
+  AuthError, checkWriteAccess, ConflictError, decodeBase64, encodeBase64, loadProgress, loadVocab, saveProgress,
 } from '../lib/github.js';
 
 async function withFetch(handler, fn) {
@@ -72,3 +72,19 @@ Deno.test('saveProgress: 409 is a ConflictError', () => withFetch(
   () => new Response('', { status: 409 }),
   () => assert.rejects(saveProgress('tok', {}, 'old'), ConflictError),
 ));
+
+Deno.test('checkWriteAccess probes with a stale sha: 409 means the token can write', () => withFetch(
+  () => new Response('', { status: 409 }),
+  async (calls) => {
+    await checkWriteAccess('tok');
+    const body = JSON.parse(calls[0].init.body);
+    assert.equal(calls[0].init.method, 'PUT');
+    assert.equal(body.branch, 'progress');
+    assert.match(body.sha, /^0{40}$/);
+  },
+));
+
+Deno.test('checkWriteAccess: a read-only or wrong-repo token is rejected', async () => {
+  await withFetch(() => new Response('', { status: 403 }), () => assert.rejects(checkWriteAccess('tok'), AuthError));
+  await withFetch(() => new Response('', { status: 404 }), () => assert.rejects(checkWriteAccess('tok'), AuthError));
+});

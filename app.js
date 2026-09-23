@@ -3,7 +3,7 @@
 import { parseCsv } from './lib/csv.js';
 import { buildSession, counts, DIRECTIONS } from './lib/study.js';
 import { Session } from './lib/session.js';
-import { AuthError, loadProgress, loadVocab, saveProgress } from './lib/github.js';
+import { AuthError, checkWriteAccess, loadProgress, loadVocab, saveProgress } from './lib/github.js';
 import { ProgressStore } from './lib/store.js';
 
 const $ = (id) => document.getElementById(id);
@@ -15,7 +15,6 @@ const BADGE = { unsaved: '', saving: 'saving…', saved: 'saved ✓', error: '�
 const prefs = {
   get(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } },
   set(key, value) { try { localStorage.setItem(key, value); } catch { /* storage blocked */ } },
-  remove(key) { try { localStorage.removeItem(key); } catch { /* storage blocked */ } },
 };
 const oneOf = (value, allowed, fallback) => (allowed.includes(value) ? value : fallback);
 
@@ -51,9 +50,11 @@ async function connect(token) {
     { load: () => loadProgress(token), save: (data, sha) => saveProgress(token, data, sha) },
     setSaveStatus,
   );
-  const [csv] = await Promise.all([loadVocab(token), store.load()]);
+  const [csv] = await Promise.all([loadVocab(token), store.load(), checkWriteAccess(token)]);
   ({ words: state.words, skipped: state.skipped } = parseCsv(csv));
   state.store = store;
+  state.saveStatus = store.status;
+  $('save-badge').hidden = true;
 }
 
 async function boot() {
@@ -75,6 +76,7 @@ async function boot() {
 function showTokenScreen(error = '') {
   $('token-error').textContent = error;
   $('token-error').hidden = !error;
+  $('token-cancel').hidden = !state.store || state.saveStatus === 'auth';
   show('token');
 }
 
@@ -82,9 +84,14 @@ async function saveToken() {
   const token = $('token-input').value.trim();
   if (!token) return;
   $('token-save').disabled = true;
+  const previous = state.store;
   try {
     await connect(token);
     prefs.set('gf-token', token);
+    if (previous?.dirty) {
+      state.store.absorb(previous.data);
+      trySave();
+    }
     $('token-input').value = '';
     showStart();
   } catch (err) {
@@ -95,6 +102,9 @@ async function saveToken() {
 }
 
 function showStart() {
+  if (state.saveStatus === 'auth') {
+    return showTokenScreen('Progress could not be saved: the token was rejected. Paste a new token — your answers from this session are kept.');
+  }
   for (const [id, value] of [['direction', state.direction], ['size', state.size]]) {
     for (const button of $(id).querySelectorAll('button')) {
       button.setAttribute('aria-pressed', String(button.dataset.value === value));
@@ -194,7 +204,8 @@ $('retry').addEventListener('click', boot);
 bindChoice('direction');
 bindChoice('size');
 $('start').addEventListener('click', startSession);
-$('change-token').addEventListener('click', () => { prefs.remove('gf-token'); showTokenScreen(); });
+$('change-token').addEventListener('click', () => showTokenScreen());
+$('token-cancel').addEventListener('click', showStart);
 $('card').addEventListener('click', reveal);
 $('card').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }

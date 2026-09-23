@@ -96,3 +96,25 @@ Deno.test('an auth failure reports the auth status', async () => {
   await assert.rejects(store.save(), AuthError);
   assert.equal(statuses.at(-1), 'auth');
 });
+
+Deno.test('a failed save stays reported through later answers until a save succeeds', async () => {
+  const { api, store, statuses } = await loadedStore();
+  store.record('gr-en', 'α', true, T);
+  api.failNext = new Error('offline');
+  await assert.rejects(store.save());
+  store.record('gr-en', 'β', true, T);
+  assert.equal(statuses.at(-1), 'error');
+  await store.save();
+  assert.equal(statuses.at(-1), 'saved');
+  store.record('gr-en', 'γ', true, T);
+  assert.equal(statuses.at(-1), 'unsaved');
+});
+
+Deno.test('absorb keeps unsaved answers from a previous store and saves them', async () => {
+  const { api, store } = await loadedStore();
+  const mine = { streak: 2, status: 'learning', lastSeen: T };
+  store.absorb({ version: 1, 'gr-en': { α: mine }, 'en-gr': {} });
+  assert.equal(store.dirty, true);
+  await store.save();
+  assert.deepEqual(api.remote.data['gr-en'].α, mine);
+});
