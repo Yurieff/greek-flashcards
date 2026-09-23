@@ -1,5 +1,26 @@
 {
  "version": 1,
- "gr-en": {},
+ "gr-en": {
+  "καταναλώνω": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:12:33.612Z"
+  },
+  "ξεχωριστός": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:12:33.611Z"
+  },
+  "πάντως": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:12:33.611Z"
+  },
+  "η συγκοινωνία": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:12:33.611Z"
+  }
+ },
  "en-gr": {}
 }
