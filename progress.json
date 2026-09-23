@@ -1,5 +1,46 @@
 {
  "version": 1,
- "gr-en": {},
+ "gr-en": {
+  "υποφέρω": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:44:12.656Z"
+  },
+  "προφταίνω": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:45:06.971Z"
+  },
+  "σκέφτομαι": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:44:01.887Z"
+  },
+  "η έκτακτη ανάγκη": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:44:37.161Z"
+  },
+  "η ανοιχτή επιστολή": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:45:11.629Z"
+  },
+  "ξηρός": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:44:50.224Z"
+  },
+  "ανατολικός": {
+   "streak": 1,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:44:47.405Z"
+  },
+  "συγκεκριμένος": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:49:35.588Z"
+  }
+ },
  "en-gr": {}
 }
