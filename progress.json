@@ -1,5 +1,11 @@
 {
  "version": 1,
- "gr-en": {},
+ "gr-en": {
+  "υποφέρω": {
+   "streak": 0,
+   "status": "learning",
+   "lastSeen": "2026-09-23T14:43:41.109Z"
+  }
+ },
  "en-gr": {}
 }
