@@ -6,6 +6,9 @@ SRC="/Users/nikitayuriev/Library/CloudStorage/Dropbox-Personal/Greek/Εξετά�
 cd "$(dirname "$0")"
 
 cp "$SRC" vocab.csv
+# Also refresh Clio's copy (desktop avatar); never let it block publishing the flashcards.
+bash "/Users/nikitayuriev/Library/CloudStorage/Dropbox-Personal/Claude-code-projects/Coding-projects/_Desktop-avatar/tools/sync-greek-vocab.sh" "$SRC" \
+  || echo "Clio vocab sync failed (flashcards unaffected)"
 if git diff --quiet -- vocab.csv; then
   echo "vocab.csv already up to date"
 else
